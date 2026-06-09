@@ -21,7 +21,7 @@ class SecretVersion(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     vault = models.ForeignKey(Secret, on_delete=models.CASCADE, related_name='versions')
 
-    encrypted_value = models.CharField(max_length=225)
+    encrypted_value = models.TextField()
     version_number = models.PositiveBigIntegerField()
 
     is_active = models.BooleanField(default=True)
