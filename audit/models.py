@@ -16,7 +16,7 @@ class Audit(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['created_at']
+        ordering = ['-created_at']
 
     def delete(self, *args, **kwargs):
         raise PermissionError("Audit logs cannot be deleted")

@@ -20,15 +20,15 @@ class User(AbstractBaseUser):
     last_name = models.CharField(max_length=225, blank=True)
     
     mfa_enabled = models.BooleanField(default=False)
-    mfa_secret = models.CharField()
+    mfa_secret = models.CharField(max_length=32, blank=True)
     
     failed_login_attempts = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
     is_locked = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(blank=True)
-    locked_at = models.DateTimeField(blank=True)
+    updated_at = models.DateTimeField(null=True, blank=True)
+    locked_at = models.DateTimeField(null=True, blank=True)
 
     USERNAME_FIELD = 'email'
     objects = UserManager()
