@@ -112,7 +112,7 @@ class LoginTestCase(TestCase):
         self.assertEqual(self.user.is_locked, False)
         self.assertEqual(self.user.failed_login_attempts, 1)
         
-    def test_lock_user(self):
+    def test_lock_user_on_max_failed_attempts(self):
         data = {
             'email': 'test@example.com',
             'password': 'password'
@@ -162,3 +162,17 @@ class LoginTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.user.refresh_from_db()
         self.assertFalse(self.user.is_locked)
+
+    def test_login_without_email(self):
+        data = {'email': 'test@example.com'}
+                
+        response = self.client.post(self.url, data)
+        self.user.refresh_from_db()
+        self.assertEqual(response.status_code, 400)
+
+    def test_login_without_password(self):
+        data = {'email': 'test@example.com'}
+                
+        response = self.client.post(self.url, data)
+        self.user.refresh_from_db()
+        self.assertEqual(response.status_code, 400)
