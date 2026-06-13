@@ -49,8 +49,8 @@ class LoginView(APIView):
             if failed_login_attempts >= settings.MAX_FAILED_LOGIN_ATTEMPTS:
                 user.is_locked = True
                 user.locked_at = timezone.now()
-                user.failed_login_attempts = failed_login_attempts
-                user.save(update_fields=['is_locked', 'locked_at', 'failed_login_attempts'])
+            user.failed_login_attempts = failed_login_attempts
+            user.save(update_fields=['is_locked', 'locked_at', 'failed_login_attempts'])
             return Response({'error': 'Invalid credentials'}, status=401)
         
         # successful login
