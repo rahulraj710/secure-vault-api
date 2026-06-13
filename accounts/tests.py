@@ -68,3 +68,20 @@ class RegistrationTestCase(TestCase):
         }
         response = self.client.post(self.url, data)
         self.assertNotIn('password', response.data)
+
+
+class LoginTestCase(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.url = reverse('login')
+        User.objects.create_user(email='test@example.com', password='pass')
+
+    def test_successful_login(self):
+        data = {
+            'email': 'test@example.com',
+            'password': 'pass'
+        }
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('access_token', response.data)
+        self.assertIn('refresh', response.data)
