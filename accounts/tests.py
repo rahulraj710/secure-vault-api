@@ -42,7 +42,7 @@ class RegistrationTestCase(TestCase):
         }
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, 400)
-    
+
     def test_password_not_provided(self):
         data = {
             'email': 'text@example.com',
@@ -104,14 +104,14 @@ class LoginTestCase(TestCase):
             'email': 'test@example.com',
             'password': 'password'
         }
-                
+  
         response = self.client.post(self.url, data)
         self.user.refresh_from_db()
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.data['error'], 'Invalid credentials')
         self.assertEqual(self.user.is_locked, False)
         self.assertEqual(self.user.failed_login_attempts, 1)
-        
+
     def test_lock_user_on_max_failed_attempts(self):
         data = {
             'email': 'test@example.com',
@@ -119,7 +119,7 @@ class LoginTestCase(TestCase):
         }
         for _ in range(5):
             self.client.post(self.url, data)
-        
+
         data = {
             'email': 'test@example.com',
             'password': 'pass'
@@ -140,7 +140,7 @@ class LoginTestCase(TestCase):
             self.client.post(self.url, data)
         self.user.refresh_from_db()    
         self.assertEqual(self.user.failed_login_attempts, 2)
-        
+
         data = {
             'email': 'test@example.com',
             'password': 'pass'
@@ -165,14 +165,55 @@ class LoginTestCase(TestCase):
 
     def test_login_without_email(self):
         data = {'email': 'test@example.com'}
-                
+
         response = self.client.post(self.url, data)
         self.user.refresh_from_db()
         self.assertEqual(response.status_code, 400)
 
     def test_login_without_password(self):
         data = {'email': 'test@example.com'}
-                
+
         response = self.client.post(self.url, data)
         self.user.refresh_from_db()
+        self.assertEqual(response.status_code, 400)
+
+
+class LogoutTestCase(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.login_url = reverse('login')
+        self.logout_url = reverse('logout')
+        self.user = User.objects.create_user(email='test@example.com', password='pass')
+
+    def _login(self):
+        response = self.client.post(self.login_url, {
+            'email': 'test@example.com',
+            'password': 'pass'
+        })
+        return response.data['access_token'], response.data['refresh']
+
+    def test_successful_logout(self):
+        access, refresh = self._login()
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access}')
+        response = self.client.post(self.logout_url, {'refresh': refresh})
+        self.assertEqual(response.status_code, 200)
+
+    def test_logout_without_token(self):
+        access, _ = self._login()
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access}')
+        response = self.client.post(self.logout_url, {})
+        self.assertEqual(response.status_code, 400)
+
+    def test_reuse_token_after_logout(self):
+        access, refresh = self._login()
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access}')
+        self.client.post(self.logout_url, {'refresh': refresh})
+        
+        response = self.client.post(self.logout_url, {'refresh': refresh})
+        self.assertEqual(response.status_code, 400)
+
+    def test_invalid_token_logout(self):
+        access, _ = self._login()
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access}')
+        response = self.client.post(self.logout_url, {'refresh': "randomtoken"})
         self.assertEqual(response.status_code, 400)
