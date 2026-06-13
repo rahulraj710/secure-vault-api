@@ -2,10 +2,11 @@ from django.conf import settings
 from django.utils import timezone
 
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
-from accounts.serializers import RegistrationSerializer, LoginSerializer
+from accounts.serializers import RegistrationSerializer, LoginSerializer, LogoutSerializer
 from accounts.models import User
 
 class RegistrationView(APIView):
@@ -60,3 +61,19 @@ class LoginView(APIView):
         refresh = RefreshToken.for_user(user)
         return Response({"access_token": str(refresh.access_token),"refresh":str(refresh)}, status=200)
 
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = LogoutSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+        refresh_token = serializer.validated_data['refresh']
+
+        try:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+        except TokenError:
+            return Response({'error': 'Invalid or expired token'}, status=400)
+        return Response({'message': 'Logged out'}, status=200)
